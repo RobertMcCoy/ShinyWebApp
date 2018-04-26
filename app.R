@@ -27,24 +27,33 @@ coke <- read_csv("./data/stocks/ko.us.txt")
 # Clean data and add necessary information to tables for easier manipulation later on
 crypto$date <- as.Date(crypto$date)
 crypto$year <- year(crypto$date)
-ford$Date <- as_datetime(ford$Date)
+ford$Date <- as.Date(ford$Date)
 ford$year <- year(ford$Date)
-general_electric$Date <- as_datetime(general_electric$Date)
+ford$title <- "ford"
+general_electric$Date <- as.Date(general_electric$Date)
 general_electric$year <- year(general_electric$Date)
-microsoft$Date <- as_datetime(microsoft$Date)
+general_electric$title <- "general electric"
+microsoft$Date <- as.Date(microsoft$Date)
 microsoft$year <- year(microsoft$Date)
-apple$Date <- as_datetime(apple$Date)
+microsoft$title <- "microsoft"
+apple$Date <- as.Date(apple$Date)
 apple$year <- year(apple$Date)
-facebook$Date <- as_datetime(facebook$Date)
+apple$title <- "apple"
+facebook$Date <- as.Date(facebook$Date)
 facebook$year <- year(facebook$Date)
-bp$Date <- as_datetime(bp$Date)
+facebook$title <- "facebook"
+bp$Date <- as.Date(bp$Date)
 bp$year <- year(bp$Date)
-google$Date <- as_datetime(google$Date)
+bp$title <- "bp"
+google$Date <- as.Date(google$Date)
 google$year <- year(google$Date)
-coke$Date <- as_datetime(coke$Date)
+google$title <- "google"
+coke$Date <- as.Date(coke$Date)
 coke$year <- year(coke$Date)
-amazon$Date <- as_datetime(amazon$Date)
+coke$title <- "coke"
+amazon$Date <- as.Date(amazon$Date)
 amazon$year <- year(amazon$Date)
+amazon$title <- "amazon"
 
 ### Forecasting Models ###
 bitcoin <- filter(crypto, crypto$slug == "bitcoin")
@@ -354,7 +363,7 @@ app <- shinyApp(
             )
           )
         ),
-        tabPanel("Comparisons",
+        tabPanel("Comparisons - Crypto v. Stock",
            fluidRow(
              column(12,
                 titlePanel("Bitcoin vs. Apple - (Bitcoin scaled to 1/10)"),
@@ -375,7 +384,7 @@ app <- shinyApp(
                 )
              ),
              column(12,
-                titlePanel("IOTA vs. General Electric - (General Electric scaled to 1/10)"),
+                titlePanel("Iota vs. General Electric - (General Electric scaled to 1/10)"),
                 mainPanel(
                   plotOutput("iotaVge")
                 )
@@ -385,6 +394,56 @@ app <- shinyApp(
                 mainPanel(
                   plotOutput("btcVgoogle")
                 )
+             )
+           )
+        ),
+        tabPanel("Comparisons - Stock v. Stock",
+           fluidRow(
+             column(12,
+                    titlePanel("All Companies"),
+                    mainPanel(
+                      plotOutput("allCompanies")
+                    )
+             ),
+             column(12,
+                    titlePanel("Tech Giants"),
+                    mainPanel(
+                      plotOutput("techGiants")
+                    )
+             ),
+             column(12,
+                    titlePanel("Non-Tech Giants"),
+                    mainPanel(
+                      plotOutput("nonTech")
+                    )
+             ),
+             column(12,
+                    titlePanel("Amazon vs. Google"),
+                    mainPanel(
+                      plotOutput("amznVgoogle")
+                    )
+             ),
+             column(12,
+                    titlePanel("Apple vs. Google"),
+                    mainPanel(
+                      plotOutput("appleVgoogle")
+                    )
+             ),
+             column(12,
+                    titlePanel("Apple vs. Facebook"),
+                    mainPanel(
+                      plotOutput("appleVfb")
+                    )
+             )
+           )
+        ),
+        tabPanel("Comparisons - Crypto v. Crypto",
+           fluidRow(
+             column(12,
+                titlePanel("All Crypto (No Bitcoin)"),
+                mainPanel(
+                  plotOutput("allCrypto")
+                )
              ),
              column(12,
                 titlePanel("Ethereum vs. Litecoin - (Ethereum scaled to 1/10)"),
@@ -393,9 +452,15 @@ app <- shinyApp(
                 )
              ),
              column(12,
-                titlePanel("Amazon vs. Google"),
+                titlePanel("Ethereum vs. Iota"),
                 mainPanel(
-                  plotOutput("amznVgoogle")
+                  plotOutput("ethViota")
+                )
+             ),
+             column(12,
+                titlePanel("Ripple vs. Iota"),
+                mainPanel(
+                  plotOutput("rippleViota")
                 )
              )
            )
@@ -646,6 +711,95 @@ app <- shinyApp(
       ggplot() + 
         geom_smooth(data = amazon, mapping=aes(x = Date, y = Close, color = "Amazon")) + 
         geom_smooth(data = google, mapping=aes(x = Date, y = Close, color = "Google")) +
+        scale_x_date()
+    })
+    
+    output$ethViota <- renderPlot({
+      iota <- filter(crypto, crypto$slug == "iota")
+      iota$date <- as.Date(iota$date)
+      ethereum <- filter(crypto, crypto$slug == "ethereum")
+      ethereum$date <- as.Date(ethereum$date)
+      ethereum <- filter(ethereum, ethereum$date > "2016-12-21")
+      ethereum <- filter(ethereum, ethereum$date < "2018-02-05")
+      iota <- filter(iota, iota$date > "2016-12-21")
+      iota <- filter(iota, iota$date < "2018-02-05")
+      ethereum$close <- ethereum$close / 10
+      ggplot() + 
+        geom_smooth(data = ethereum, mapping=aes(x = date, y = close, color = "Ethereum")) + 
+        geom_smooth(data = iota, mapping=aes(x = date, y = close, color = "Iota")) +
+        scale_x_date()
+    })
+    
+    output$appleVgoogle <- renderPlot({
+      google$Date <- as.Date(google$Date)
+      google <- filter(google, google$Date > "2004-08-19")
+      google <- filter(google, google$Date < "2017-11-10")
+      apple$Date <- as.Date(apple$Date)
+      apple <- filter(apple, apple$Date > "2004-08-19")
+      apple <- filter(apple, apple$Date < "2017-11-10")
+      ggplot() + 
+        geom_smooth(data = apple, mapping=aes(x = Date, y = Close, color = "Apple")) + 
+        geom_smooth(data = google, mapping=aes(x = Date, y = Close, color = "Google")) +
+        scale_x_date()
+    })
+    
+    output$rippleViota <- renderPlot({
+      iota <- filter(crypto, crypto$slug == "iota")
+      iota$date <- as.Date(iota$date)
+      ripple <- filter(crypto, crypto$slug == "ripple")
+      ripple$date <- as.Date(ripple$date)
+      ripple <- filter(ripple, ripple$date > "2017-06-13")
+      ripple <- filter(ripple, ripple$date < "2018-02-05")
+      iota <- filter(iota, iota$date > "2017-06-13")
+      iota <- filter(iota, iota$date < "2018-02-05")
+      ggplot() + 
+        geom_smooth(data = ripple, mapping=aes(x = date, y = close, color = "Ripple")) + 
+        geom_smooth(data = iota, mapping=aes(x = date, y = close, color = "Iota")) +
+        scale_x_date()
+    })
+    
+    output$allCrypto <- renderPlot({
+      crypto <- filter(crypto, slug == "iota" | slug == "monero" | slug == "bitcoin-cash" | slug == "bitconnect" | 
+                         slug == "litecoin" | slug == "ethereum" | slug == "ripple")
+      ggplot() + 
+        geom_smooth(data = crypto, mapping=aes(x = date, y = close, color = slug))
+    })
+    
+    output$allCompanies <- renderPlot({
+      coke <- filter(coke, Date > "1985-01-01")
+      general_electric <- filter(general_electric, Date > "1985-01-01")
+      ford <- filter(ford, Date > "1985-01-01")
+      ggplot(mapping = aes(Date, Close, color = title)) + geom_smooth(data = ford) + 
+        geom_smooth(data = general_electric) + geom_smooth(data = microsoft) + geom_smooth(data = apple) + 
+        geom_smooth(data = google) + geom_smooth(data = facebook) + geom_smooth(data = amazon) + 
+        geom_smooth(data = coke) + geom_smooth(data = bp) + scale_x_date()
+    })
+    
+    output$techGiants <- renderPlot({
+      apple <- filter(apple, Date > "1995-01-01")
+      microsoft <- filter(microsoft, Date > "1995-01-01")
+      ggplot(mapping = aes(Date, Close, color = title)) + geom_smooth(data = microsoft) + geom_smooth(data = apple) + 
+        geom_smooth(data = google) + geom_smooth(data = facebook) + geom_smooth(data = amazon) + scale_x_date()
+    })
+    
+    output$nonTech <- renderPlot({
+      coke <- filter(coke, Date > "1985-01-01")
+      general_electric <- filter(general_electric, Date > "1985-01-01")
+      ford <- filter(ford, Date > "1985-01-01")
+      ggplot(mapping = aes(Date, Close, color = title)) + geom_smooth(data = ford) + 
+        geom_smooth(data = general_electric) + geom_smooth(data = coke) + geom_smooth(data = bp) + scale_x_date()
+    })
+    
+    output$appleVfb <- renderPlot({
+      facebook$Date <- as.Date(facebook$Date)
+      facebook <- filter(facebook, facebook$Date > "2004-08-19")
+      facebook <- filter(facebook, facebook$Date < "2017-11-10")
+      apple$Date <- as.Date(apple$Date)
+      apple <- filter(apple, apple$Date > "2004-08-19")
+      apple <- filter(apple, apple$Date < "2017-11-10")
+      ggplot() + 
+        geom_smooth(data = apple, mapping=aes(x = Date, y = Close, color = "Apple")) + 
+        geom_smooth(data = facebook, mapping=aes(x = Date, y = Close, color = "Facebook")) +
         scale_x_date()
     })
   }
